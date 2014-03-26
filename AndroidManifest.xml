@@ -35,5 +35,5 @@
             android:label="@string/title_activity_tag_show" >
         </activity>
     </application>
-
+	<uses-permission android:name="android.permission.INTERNET" /> 
 </manifest>
