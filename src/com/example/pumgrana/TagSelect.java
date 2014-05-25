@@ -3,6 +3,8 @@ package com.example.pumgrana;
 import java.io.Console;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
  
 import android.app.Activity;
 import android.content.Intent;
@@ -35,9 +37,18 @@ public class TagSelect extends Activity implements
         Log.i("array", "ok");
         for (String s : array)
         	Log.d("data", s);
-        String[] sports = getResources().getStringArray(R.array.tags);
+    	PumgranaDB tagDB = new PumgranaDB(this);
+    	tagDB.open();
+    	List<Tag> listTag = tagDB.getAllTag();
+    	Iterator<Tag> it = listTag.iterator();
+		List<String> viewTag = new ArrayList<String>();
+    	while (it.hasNext()) {
+    		Tag tag = it.next();
+    		viewTag.add(tag.getName());
+    	}
+    	tagDB.close();
         adapter = new ArrayAdapter<String>(this,
-                android.R.layout.simple_list_item_multiple_choice, sports);
+                android.R.layout.simple_list_item_multiple_choice, viewTag);
         listView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
         listView.setAdapter(adapter);
         int i = 0;

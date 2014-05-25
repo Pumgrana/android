@@ -1,20 +1,25 @@
 package com.example.pumgrana;
 
 public class Data {
-	private String _id;
+	private Integer _id;
+	private String dataId;
 	private String title;
 	private String text;
 	
 	public Data(){}
 	
 	public Data(String id, String title, String text){
-		this._id = id;
+		this.dataId = id;
 		this.title = title;
 		this.text = text;
 	}
 	
-	public String getId(){
+	public Integer getId(){
 		return _id;
+	}
+	
+	public String getDataId(){
+		return dataId;
 	}
 	
 	public String getTitle(){
@@ -25,8 +30,12 @@ public class Data {
 		return text;
 	}
 	
-	public void setId(String id){
+	public void setId(Integer id){
 		this._id = id;
+	}
+	
+	public void setDataId(String dataId) {
+		this.dataId = dataId;
 	}
 	
 	public void setTitle(String title){

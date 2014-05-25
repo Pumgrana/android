@@ -1,32 +1,14 @@
 package com.example.pumgrana;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import android.os.AsyncTask;
-import android.os.Bundle;
 import android.app.Activity;
-import android.content.Intent;
-import android.util.Log;
+import android.os.Bundle;
 import android.view.Menu;
-import android.view.View;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.TextView;
 
 public class TagShow extends Activity {
 
@@ -36,9 +18,21 @@ public class TagShow extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_tag_show);
-        String [] contents = getResources().getStringArray(R.array.tags);
+        String name = getIntent().getExtras().getString("name");
+    	PumgranaDB dataDB = new PumgranaDB(this);
+		dataDB.open();
+		Data data = dataDB.getData(name);
+		List<Tag> tagList = dataDB.getTbyD(data.getDataId());
+		List<String> tagNameList = new ArrayList<String>();
+		Iterator<Tag> it = tagList.iterator();
+		while(it.hasNext()) {
+			Tag tag = it.next();
+			tagNameList.add(tag.getName());
+		}
+		dataDB.close();
+//        String [] contents = getResources().getStringArray(R.array.tags);
         ListView l= (ListView) findViewById(R.id.listView1);
-        adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, contents);
+        adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, tagNameList);
         l.setAdapter(adapter);
 //		String id = getIntent().getExtras().getString("ids");
 //        new HttpAsyncTask().execute("http://163.5.84.222/api/tag/list_from_content/".concat(id));

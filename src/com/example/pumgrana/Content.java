@@ -1,10 +1,15 @@
 package com.example.pumgrana;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
+import android.widget.TextView;
 
 public class Content extends Activity {
 	public String name;
@@ -14,35 +19,76 @@ public class Content extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_content);
-//		name = getIntent().getExtras().getString("name");
+		setupActionBar();
+		Log.i("attention", "crash");
+		name = getIntent().getExtras().getString("name");
+		Log.i("attention", "crashed");
 //		id = getIntent().getExtras().getString("ids");
-//		String conc = name.concat(id);
-//		TextView t = (TextView) findViewById(R.id.textView1);
-//		t.setText(conc);
+		TextView t = (TextView) findViewById(R.id.textView1);
+		t.setText(name);
+		getDetails(name);
 //        new HttpAsyncTask().execute("http://163.5.84.222/api/content/detail/".concat(id));
 	}
-
+	/**
+	 * Set up the {@link android.app.ActionBar}, if the API is available.
+	 */
+	@TargetApi(Build.VERSION_CODES.HONEYCOMB)
+	private void setupActionBar() {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+			getActionBar().setDisplayHomeAsUpEnabled(true);
+		}
+	}
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		getMenuInflater().inflate(R.menu.content, menu);
 		return true;
 	}
-	
+
+	private void getDetails(String name) {
+    	PumgranaDB dataDB = new PumgranaDB(this);
+		dataDB.open();
+		Data data = dataDB.getData(name);
+		id = data.getDataId();
+		dataDB.close();
+		TextView t = (TextView) findViewById(R.id.textView2);
+		t.setText(data.getText());
+	}
     public void openTags(View view)
     {
     	Intent intent = new Intent(this, TagShow.class);
 		Bundle b = new Bundle();
 		b.putString("name", name);
-		b.putString("ids", id);
+		b.putString("id", id);
 		intent.putExtras(b);
     	startActivity(intent);
     }
     
     public void openLinks(View view)
     {
-    	Intent intent = new Intent(this, MainActivity.class);
+    	Intent intent = new Intent(this, Links.class);
+    	Bundle b = new Bundle();
+    	b.putString("id", id);
+    	intent.putExtras(b);
     	startActivity(intent);
     }
+    
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch (item.getItemId()) {
+		case android.R.id.home:
+			// This ID represents the Home or Up button. In the case of this
+			// activity, the Up button is shown. Use NavUtils to allow users
+			// to navigate up one level in the application structure. For
+			// more details, see the Navigation pattern on Android Design:
+			//
+			// http://developer.android.com/design/patterns/navigation.html#up-vs-back
+			//
+			finish();
+			//NavUtils.navigateUpFromSameTask(this);
+			return true;
+		}
+		return super.onOptionsItemSelected(item);
+	}
 /*    
     private class HttpAsyncTask extends AsyncTask<String, Void, String> {
         @Override

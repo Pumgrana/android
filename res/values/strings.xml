@@ -22,5 +22,6 @@
     </string-array>
 
     <string name="title_activity_tag_show">TagShow</string>
+    <string name="title_activity_links">Links</string>
 
 </resources>
