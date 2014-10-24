@@ -23,5 +23,16 @@
 
     <string name="title_activity_tag_show">TagShow</string>
     <string name="title_activity_links">Links</string>
+    <string name="title_activity_content_edit">Content_edit</string>
+    <string name="title_activity_tag_edit">TagEdit</string>
+    <string name="title_activity_tag_add">TagAdd</string>
+    <string name="title_activity_add_content">AddContent</string>
+    <string name="title_activity_delete_contents">DeleteContents</string>
+    <string name="title_activity_tag_links_select">TagLinksSelect</string>
+    <color name="white">#fff</color>
+    <color name="pumred">#fa4b4e</color>
+    
+    <string name="drawer_open">Open navigation drawer</string>
+    <string name="drawer_close">Close navigation drawer</string>    
 
 </resources>

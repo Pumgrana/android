@@ -8,27 +8,39 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context=".TagShow" >
 
-    <TextView
-        android:id="@+id/textView1"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentTop="true"
-        android:text="Tags"
-        android:textAppearance="?android:attr/textAppearanceMedium" />
-
     <ListView
         android:id="@+id/listView1"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignLeft="@+id/textView1"
-        android:layout_below="@+id/textView1"
-        android:layout_marginTop="5dp"
+        android:layout_below="@+id/button1"
         android:background="@drawable/border"
-        android:padding="5dp"
-        android:listSelector="@android:color/transparent"
-        android:focusableInTouchMode="false"
+        android:clickable="false"
         android:focusable="false"
-        android:clickable="false" />"
+        android:focusableInTouchMode="false"
+        android:listSelector="@android:color/transparent"
+        android:padding="5dp" />
+
+    <Button
+        android:id="@+id/button1"
+        style="?android:attr/buttonStyleSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:onClick="onAdd"
+        android:layout_alignRight="@+id/textView1"
+        android:text="Add" />
+
+    <TextView
+        android:id="@+id/textView1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/button1"
+        android:layout_alignBottom="@+id/button1"
+        android:layout_alignParentLeft="true"
+        android:text="Tags"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+
+"
 
 </RelativeLayout>

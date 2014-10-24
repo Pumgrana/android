@@ -1,4 +1,4 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!--<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -7,15 +7,6 @@
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context=".MainActivity" >
-
-    <TextView
-        android:id="@+id/textView1"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentTop="true"
-        android:text="@string/selected_tag"
-        android:textAppearance="?android:attr/textAppearanceMedium" />
 
     <Button
         android:id="@+id/button1"
@@ -31,12 +22,89 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_above="@+id/button1"
-        android:layout_alignLeft="@+id/textView1"
-        android:layout_below="@+id/textView1"
-        android:layout_marginTop="5dp"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/button3"
         android:background="@drawable/border"
         android:padding="5dp" >
 
     </ListView>
 
-</RelativeLayout>
+    <Button
+        android:id="@+id/button3"
+        style="?android:attr/buttonStyleSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignRight="@+id/listView1"
+        android:onClick="onDelete"
+        android:text="Delete mode" />
+
+    <Button
+        android:id="@+id/button2"
+        style="?android:attr/buttonStyleSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/button3"
+        android:layout_toLeftOf="@+id/button3"
+        android:onClick="onAdd"
+        android:text="Add" />
+
+    <TextView
+        android:id="@+id/textView1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/button2"
+        android:layout_alignBottom="@+id/button2"
+        android:layout_alignLeft="@+id/listView1"
+        android:layout_toLeftOf="@+id/button2"
+        android:text="Aucun"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+
+</RelativeLayout>-->
+<android.support.v4.widget.DrawerLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/drawer_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    
+    <FrameLayout
+    android:id="@+id/content_frame"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" />
+    
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	    android:orientation="vertical"
+		android:id="@+id/left_drawer"
+        android:layout_width="240dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:choiceMode="singleChoice"
+        android:divider="@android:color/transparent"
+        android:dividerHeight="0dp"
+        android:paddingTop="10dp"
+        android:background="#d8d9da">
+        
+	    <ImageView
+	        android:id="@+id/imageView1"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:src="@drawable/icons_mobbtn_home_red"
+	        android:layout_gravity="center_horizontal" />
+	
+	    <ListView
+	        android:id="@+id/listView1"
+	        android:layout_width="match_parent"
+	        android:layout_height="222dp" >
+	    </ListView>
+	
+	    <ImageView
+	        android:id="@+id/imageView2"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:baselineAlignBottom="true"
+	        android:src="@drawable/icons_mobbtn_plus_red"
+	        android:layout_gravity="center_horizontal" />
+	
+	</LinearLayout>
+
+</android.support.v4.widget.DrawerLayout>
