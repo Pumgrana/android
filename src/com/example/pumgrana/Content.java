@@ -2,6 +2,8 @@ package com.example.pumgrana;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -10,18 +12,30 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.example.pumgrana.MainActivity.MainFragment;
+
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.Fragment;
+import android.app.FragmentManager;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.NavUtils;
+import android.support.v4.widget.DrawerLayout;
 import android.text.Html;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.TextView;
 
 // TODO: Auto-generated Javadoc
@@ -45,6 +59,15 @@ public class Content extends Activity {
 	/** The m. */
 	public Misc m;
 	
+    private DrawerLayout mDrawerLayout;
+    private ListView mDrawerList;
+    private LinearLayout mDrawerLinearLayout;
+
+    private ActionBarDrawerToggle mDrawerToggle;
+
+    private CharSequence mDrawerTitle;
+    private CharSequence mTitle;    
+	
 	/* (non-Javadoc)
 	 * @see android.app.Activity#onCreate(android.os.Bundle)
 	 */
@@ -52,18 +75,103 @@ public class Content extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_content);
-		setupActionBar();
-		Log.i("attention", "crash");
+		
+        mTitle = mDrawerTitle = getTitle();
 		m = new Misc(this);
+        
+        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        mDrawerLinearLayout = (LinearLayout) findViewById(R.id.left_drawer);
+        mDrawerList = (ListView) findViewById(R.id.listView1);
+
+		//setupActionBar();
+		Log.i("attention", "crash");
 		name = getIntent().getExtras().getString("name");
 		uri = getIntent().getExtras().getString("uri");
-		getDetailsNoDB(uri);
+		
+        getActionBar().setDisplayHomeAsUpEnabled(true);
+        getActionBar().setHomeButtonEnabled(true);        
+
+        mDrawerToggle = new ActionBarDrawerToggle(
+                this,                  /* host Activity */
+                mDrawerLayout,         /* DrawerLayout object */
+                R.drawable.ic_drawer,  /* nav drawer image to replace 'Up' caret */
+                R.string.drawer_open,  /* "open drawer" description for accessibility */
+                R.string.drawer_close  /* "close drawer" description for accessibility */
+                ) {
+            public void onDrawerClosed(View view) {
+                getActionBar().setTitle(mTitle);
+                invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
+            }
+
+            public void onDrawerOpened(View drawerView) {
+                getActionBar().setTitle(mDrawerTitle);
+                invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
+            }
+        };
+        mDrawerLayout.setDrawerListener(mDrawerToggle);
+        
+        Fragment fragment = new MainFragment(uri);
+        FragmentManager fragmentManager = getFragmentManager();
+        fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).commit();
+        mDrawerToggle.syncState();
 /*		updateContent();
 		Log.i("attention", "crashed");
 //		id = getIntent().getExtras().getString("ids");
 		getDetails(name);*/
 //        new HttpAsyncTask().execute("http://163.5.84.222/api/content/detail/".concat(id));
 	}
+	
+	public static class MainFragment extends Fragment {
+        ArrayAdapter<String> adapter;
+        List<String> dataUri;
+        String uri;
+        public MainFragment(String main_uri) {
+        	uri = main_uri;
+            // Empty constructor required for fragment subclasses
+        }
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                Bundle savedInstanceState) {
+            View rootView = inflater.inflate(R.layout.content_view, container, false);
+            updateViewNoDB(rootView);
+            return rootView;
+        }
+        
+        public void updateViewNoDB(View rootView) {
+        	Requests req = new Requests();
+        	Log.d("fetchData", "req");
+    		try {
+    			req.execute("get", "http://" + "163.5.84.222" + "/api/content/detail/" + URLEncoder.encode(uri, "utf-8"));
+    			String result = req.get(3, TimeUnit.SECONDS);
+    			JSONObject jObject = new JSONObject(result);
+    			JSONArray jObj = jObject.getJSONArray("contents");
+    			for (int i=0; i < jObj.length(); i++) {
+    		        TextView t = (TextView) rootView.findViewById(R.id.textView1);
+    				t.setText(jObj.getJSONObject(i).getString("title"));
+    				TextView t2 = (TextView) rootView.findViewById(R.id.textView2);
+    				t2.setText(Html.fromHtml((jObj.getJSONObject(i)).getString("body")));
+    		        t2.setMovementMethod(new ScrollingMovementMethod());
+    			}
+    		} catch (InterruptedException e) {
+    			// TODO Auto-generated catch block
+    			e.printStackTrace();
+    		} catch (ExecutionException e) {
+    			// TODO Auto-generated catch block
+    			e.printStackTrace();
+    		} catch (TimeoutException e) {
+    			// TODO Auto-generated catch block
+    			e.printStackTrace();
+    		} catch (UnsupportedEncodingException e) {
+    			// TODO Auto-generated catch block
+    			e.printStackTrace();
+    		} catch (JSONException e) {
+    			// TODO Auto-generated catch block
+    			e.printStackTrace();
+    		}
+    	}
+        
+    }
 	/**
 	 * Set up the {@link android.app.ActionBar}, if the API is available.
 	 */
