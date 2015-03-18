@@ -5,17 +5,17 @@
     android:versionName="1.0" >
 
     <uses-sdk
-        android:minSdkVersion="8"
+        android:minSdkVersion="14"
         android:targetSdkVersion="18" />
 
-    <uses-permission android:name="android.permission.INTERNET" />    
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    
+
     <application
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
-        android:theme="@style/AppTheme" >
+        android:theme="@style/CustomActionBarTheme" >
         <activity
             android:name="com.example.pumgrana.MainActivity"
             android:label="@string/app_name" >
@@ -31,7 +31,7 @@
         </activity>
         <activity
             android:name="com.example.pumgrana.Content"
-            android:label="@string/title_activity_content" 
+            android:label="@string/title_activity_content"
             android:parentActivityName="com.example.pumgrana.MainActivity" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
@@ -48,6 +48,42 @@
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.example.pumgrana.Content" />
+        </activity>
+        <activity
+            android:name="com.example.pumgrana.Content_edit"
+            android:label="@string/title_activity_content_edit"
+            android:parentActivityName="com.example.pumgrana.Content" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.example.pumgrana.Content" />
+        </activity>
+        <activity
+            android:name="com.example.pumgrana.TagEdit"
+            android:label="@string/title_activity_tag_edit"
+            android:parentActivityName="com.example.pumgrana.Content_edit" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.example.pumgrana.Content_edit" />
+        </activity>
+        <activity
+            android:name="com.example.pumgrana.TagAdd"
+            android:label="@string/title_activity_tag_add" >
+        </activity>
+        <activity
+            android:name="com.example.pumgrana.AddContent"
+            android:label="@string/title_activity_add_content"
+            android:parentActivityName="com.example.pumgrana.MainActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.example.pumgrana.MainActivity" />
+        </activity>
+        <activity
+            android:name="com.example.pumgrana.DeleteContents"
+            android:label="@string/title_activity_delete_contents" >
+        </activity>
+        <activity
+            android:name="com.example.pumgrana.TagLinksSelect"
+            android:label="@string/title_activity_tag_links_select" >
         </activity>
     </application>
 

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="pumgrana_red">#FA4B4E</color>
+    <color name="pumgrana_lightred">#F96D72</color>
+    <color name="pumgrana_white">#F3F3F3</color>
+    <color name="pum_fullwhite">#FFFFFF</color>
+    <color name="pumgrana_grey">#636363</color>
+    <color name="pumgrana_lightgrey">#d8d9da</color>
+</resources>

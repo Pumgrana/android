@@ -1,8 +1,13 @@
 package com.example.pumgrana;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -11,63 +16,429 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.example.pumgrana.R;
+
+import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.Fragment;
+import android.app.FragmentManager;
+import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.Build;
 import android.os.Bundle;
+import android.support.v4.app.ActionBarDrawerToggle;
+import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
+import android.util.SparseBooleanArray;
+import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.SimpleAdapter;
 import android.widget.TextView;
+import android.widget.Toast;
 
+// TODO: Auto-generated Javadoc
+/**
+ * MainActivity and home view.
+ */
+@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 public class MainActivity extends Activity {
 
+    /** The adapter. */
     ArrayAdapter<String> adapter;
-    List<String> contentIds;
+    
+    /** The data uri. */
+    List<String> dataUri;
+    
+    /** The m. */
     Misc m;
-   
+
+    private String[] mTags;
+    private DrawerLayout mDrawerLayout;
+    private ListView mDrawerList;
+    private LinearLayout mDrawerLinearLayout;
+    final private ArrayList<String> selectedItems = new ArrayList<String>();
+    final private ArrayList<String> selectedId = new ArrayList<String>();
+    private ActionBarDrawerToggle mDrawerToggle;
+    private MainFragment fragment;
+    
+    private CharSequence mDrawerTitle;
+    private CharSequence mTitle;    
+    /* (non-Javadoc)
+     * @see android.app.Activity#onCreate(android.os.Bundle)
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        
+        mTitle = mDrawerTitle = getTitle();
+
         m = new Misc(this);
         if (m.isOnline()) {
-        Log.i("Main activity", "fetchData");
+/*        Log.i("Main activity", "fetchData");
         fetchData();
         Log.i("Main activity", "fetchTag");
         fetchTag();
         Log.i("Main activity", "fetchDT");
-        fetchDT();
+        fetchDT(); */
+        //updateViewNoDB();
         } else {
         	Log.i("internet", "offline");
         }
-        Log.i("Main activity", "updateView");        
-        updateView();
-/*        try {
-			String result = req.get();
-	        Log.d("result", "OK");
-	        try {
+        Log.i("Main activity", "updateView");
+        mTags = getResources().getStringArray(R.array.tags);
+        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        mDrawerLinearLayout = (LinearLayout) findViewById(R.id.left_drawer);
+        mDrawerList = (ListView) findViewById(R.id.listView1);
+        getTagNoDB(mDrawerList);
+        //mDrawerList.setOnItemClickListener(new DrawerItemClickListener());
+        
+        getActionBar().setDisplayHomeAsUpEnabled(true);
+        getActionBar().setHomeButtonEnabled(true);        
+
+        mDrawerToggle = new ActionBarDrawerToggle(
+                this,                  /* host Activity */
+                mDrawerLayout,         /* DrawerLayout object */
+                R.drawable.ic_drawer,  /* nav drawer image to replace 'Up' caret */
+                R.string.drawer_open,  /* "open drawer" description for accessibility */
+                R.string.drawer_close  /* "close drawer" description for accessibility */
+                ) {
+            public void onDrawerClosed(View view) {
+                getActionBar().setTitle(mTitle);
+                invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
+            }
+
+            public void onDrawerOpened(View drawerView) {
+                getActionBar().setTitle(mDrawerTitle);
+                invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
+            }
+        };
+        mDrawerLayout.setDrawerListener(mDrawerToggle);
+        
+        fragment = new MainFragment();
+        FragmentManager fragmentManager = getFragmentManager();
+        fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).commit();
+        mDrawerToggle.syncState();
+//        updateView();
+/*        String [] contents = getResources().getStringArray(R.array.contents);
+        ListView l= (ListView) findViewById(R.id.listView1);
+        adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, contents);
+        l.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        	@Override
+            public void onItemClick(AdapterView<?> parent, final View view, int position, long id) {
+        		Intent intent = new Intent(parent.getContext(), Content.class);
+        		String name = parent.getAdapter().getItem(position).toString();
+        		String uri = dataUri.get(position);
+        		Bundle b = new Bundle();
+        		b.putString("name", name);
+        		b.putString("uri", uri);
+        		intent.putExtras(b);
+        		startActivity(intent);
+        	}
+        });*/
+    }
+
+    public static class MainFragment extends Fragment {
+        ArrayAdapter<String> adapter;
+        List<String> dataUri;
+        View rootView;
+        
+        public MainFragment() {
+            // Empty constructor required for fragment subclasses
+        }
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                Bundle savedInstanceState) {
+            rootView = inflater.inflate(R.layout.main_view, container, false);
+            updateViewNoDB();
+            return rootView;
+        }
+        
+        public void updateViewFilterNoDB(ArrayList<String> arr)
+        {
+        	String reqStr = "http://" + "54.69.150.141" + "/api/content/list_content//";
+        	for (int i = 0; i < arr.size(); i++) {
+        		try {
+    				reqStr += URLEncoder.encode(arr.get(i), "utf-8") + "/";
+    			} catch (UnsupportedEncodingException e) {
+    				// TODO Auto-generated catch block
+    				e.printStackTrace();
+    			}
+        	}
+        	Log.d("reqStr", reqStr);
+        	Requests req = new Requests();
+            req.execute("get", reqStr);
+            try {
+            	Boolean status;
+    			String result = req.get(10, TimeUnit.SECONDS);
+    			Log.d("result", result);
+    			if (result != null) {
+    				JSONObject jObject = new JSONObject(result);
+    				JSONArray jObj = jObject.getJSONArray("contents");
+    				List<String> viewData = new ArrayList<String>();
+    				dataUri = new ArrayList<String>();
+    				List<Map<String, String>> dataMap = new ArrayList<Map<String, String>>();
+    				for (int i=0; i < jObj.length(); i++) {				
+    					Map<String, String> datum = new HashMap<String, String>(2);
+    					viewData.add((jObj.getJSONObject(i)).getString("title"));
+    					String title = jObj.getJSONObject(i).getString("title");
+    					dataUri.add((jObj.getJSONObject(i)).getString("uri"));
+    					String summary = jObj.getJSONObject(i).getString("summary");
+    					datum.put("title", title);
+    					datum.put("summary", summary);
+    					dataMap.add(datum);
+    				}
+        		    ListView l= (ListView) rootView.findViewById(R.id.listView1);
+        		    TextView tv1 = new TextView(rootView.getContext());
+        		    TextView tv2 = new TextView(rootView.getContext());  		    
+        		    SimpleAdapter simpleAdapter = new SimpleAdapter(rootView.getContext(), dataMap, android.R.layout.simple_list_item_2, new String[] {"title", "summary"}, new int[] {android.R.id.text1, android.R.id.text2});
+        	        l.setAdapter(simpleAdapter);				
+        	        l.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        	        	@Override
+        	            public void onItemClick(AdapterView<?> parent, final View view, int position, long id) {
+        	        		Intent intent = new Intent(parent.getContext(), Content.class);
+        	        		String name = ((Map<String, String>) parent.getAdapter().getItem(position)).get("title");
+        	        		String uri = dataUri.get(position);
+        	        		Bundle b = new Bundle();
+        	        		b.putString("name", name);
+        	        		b.putString("uri", uri);
+        	        		intent.putExtras(b);
+        	        		startActivity(intent);
+        	        	}
+        	        });
+    				
+    			}
+    		} catch (InterruptedException e) {
+    			// TODO Auto-generated catch block
+    			e.printStackTrace();
+    		} catch (ExecutionException e) {
+    			// TODO Auto-generated catch block
+    			e.printStackTrace();
+    		} catch (TimeoutException e) {
+    			// TODO Auto-generated catch block
+    			e.printStackTrace();
+    		} catch (JSONException e) {
+    			// TODO Auto-generated catch block
+    			e.printStackTrace();
+    		}
+        }
+              
+        public void updateViewNoDB()
+        {
+        	Requests req = new Requests();
+            req.execute("get", "http://" + "54.69.150.141" + "/api/content/list_content");
+            try {
+    			String result = req.get(1000, TimeUnit.SECONDS);
+    			if (result != null) {
+    				JSONObject jObject = new JSONObject(result);
+    				JSONArray jObj = jObject.getJSONArray("contents");
+    				List<String> viewData = new ArrayList<String>();
+    				dataUri = new ArrayList<String>();
+    				List<Map<String, String>> dataMap = new ArrayList<Map<String, String>>();
+    				for (int i=0; i < jObj.length(); i++) {				
+    					Map<String, String> datum = new HashMap<String, String>(2);
+    					viewData.add((jObj.getJSONObject(i)).getString("title"));
+    					String title = jObj.getJSONObject(i).getString("title");
+    					dataUri.add((jObj.getJSONObject(i)).getString("uri"));
+    					String summary = jObj.getJSONObject(i).getString("summary");
+    					datum.put("title", title);
+    					datum.put("summary", summary);
+    					dataMap.add(datum);
+    				}
+    				Log.d("content", dataMap.toString());
+    		    ListView l= (ListView) rootView.findViewById(R.id.listView1);
+    	        /*adapter = new ArrayAdapter<String>(rootView.getContext(), android.R.layout.simple_list_item_1, viewData);
+    	        l.setAdapter(adapter);				
+    	        l.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+    	        	@Override
+    	            public void onItemClick(AdapterView<?> parent, final View view, int position, long id) {
+    	        		Intent intent = new Intent(parent.getContext(), Content.class);
+    	        		String name = parent.getAdapter().getItem(position).toString();
+    	        		String uri = dataUri.get(position);
+    	        		Bundle b = new Bundle();
+    	        		b.putString("name", name);
+    	        		b.putString("uri", uri);
+    	        		intent.putExtras(b);
+    	        		startActivity(intent);
+    	        	}*/
+    		    TextView tv1 = new TextView(rootView.getContext());
+    		    TextView tv2 = new TextView(rootView.getContext());  		    
+    		    SimpleAdapter simpleAdapter = new SimpleAdapter(rootView.getContext(), dataMap, android.R.layout.simple_list_item_2, new String[] {"title", "summary"}, new int[] {android.R.id.text1, android.R.id.text2});
+    	        l.setAdapter(simpleAdapter);				
+    	        l.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+    	        	@Override
+    	            public void onItemClick(AdapterView<?> parent, final View view, int position, long id) {
+    	        		Intent intent = new Intent(parent.getContext(), Content.class);
+    	        		String name = ((Map<String, String>) parent.getAdapter().getItem(position)).get("title");
+    	        		String uri = dataUri.get(position);
+    	        		Bundle b = new Bundle();
+    	        		b.putString("name", name);
+    	        		b.putString("uri", uri);
+    	        		intent.putExtras(b);
+    	        		startActivity(intent);
+    	        	}
+    	        });
+    			}
+    		} catch (InterruptedException e) {
+    			// TODO Auto-generated catch block
+    			e.printStackTrace();
+    		} catch (ExecutionException e) {
+    			// TODO Auto-generated catch block
+    			e.printStackTrace();
+    		} catch (TimeoutException e) {
+    			// TODO Auto-generated catch block
+    			e.printStackTrace();
+    		} catch (JSONException e) {
+    			// TODO Auto-generated catch block
+    			e.printStackTrace();
+    		}
+        }
+        
+    }    
+    /* (non-Javadoc)
+     * @see android.app.Activity#onCreateOptionsMenu(android.view.Menu)
+     */
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.main, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    /* Called whenever we call invalidateOptionsMenu() */
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        // If the nav drawer is open, hide action items related to the content view
+        boolean drawerOpen = mDrawerLayout.isDrawerOpen(mDrawerLinearLayout);
+        return super.onPrepareOptionsMenu(menu);
+    }
+    
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+         // The action bar home/up action should open or close the drawer.
+         // ActionBarDrawerToggle will take care of this.
+        if (mDrawerToggle.onOptionsItemSelected(item)) {
+            return true;
+        }
+        // Handle action buttons
+        switch(item.getItemId()) {
+        default:
+            return super.onOptionsItemSelected(item);
+        }
+    }
+    
+    
+    
+    private void getTagNoDB(final ListView listView) {
+    	Misc m = new Misc(this);
+    	Requests req = new Requests();
+        req.execute("get", "http://" + "54.69.150.141" + "/api/tag/list_by_type/CONTENT");
+        try {
+			String result = req.get(10, TimeUnit.SECONDS);
+			Log.d("RESULT", result);
+			JSONObject jObject = new JSONObject(result);
+			JSONArray jObj = jObject.getJSONArray("tags");
+			List<String> viewTag = new ArrayList<String>();
+			final ArrayList<String> idTag = new ArrayList<String>();
+			for (int i=0; i < jObj.length(); i++) {
+				idTag.add(jObj.getJSONObject(i).getString("uri"));
+				viewTag.add(jObj.getJSONObject(i).getString("subject"));
+			}
+			final List<Integer> tagSelected = new ArrayList<Integer>();
+	        adapter = new ArrayAdapter<String>(this, R.layout.tag_list, viewTag);
+	        listView.setAdapter(adapter);	        
+	        listView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
+	        listView.setOnItemClickListener(new AdapterView.OnItemClickListener(){
+	        	public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+	        		if (selectedItems.contains(adapter.getItem(position))) {
+	        			selectedItems.remove(adapter.getItem(position));
+	        			selectedId.remove(idTag.get(position));
+	        			view.setBackground(getResources().getDrawable(R.drawable.rounded_rectangle));
+	        		} else {
+	        			selectedItems.add(adapter.getItem(position));
+                    	selectedId.add(idTag.get(position));
+	        			view.setBackground(getResources().getDrawable(R.drawable.rounded_rectangle_filled));
+	        		}
+	        		Log.d("checked", selectedItems.toString());
+	        		/*if (tagSelected.contains(view.getId())) {
+	        			tagSelected.remove(Integer.valueOf(view.getId()));
+	        			view.setBackgroundColor(getResources().getColor(R.color.pumgrana_white));	        			
+	        		} else {
+	        			view.setBackgroundColor(getResources().getColor(R.color.pumgrana_red));
+	        			tagSelected.add(view.getId());
+	        		}*/
+	        	}
+	        });
+	        int i = 0;
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ExecutionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (TimeoutException e) {
+			Log.i("timeout", "timed out");
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+    }
+
+
+    public void updateViewOnClick(View view)
+    {
+    	fragment.updateViewFilterNoDB(selectedId);
+    }
+    /**
+     * Update view no db.
+     */
+    public void updateViewNoDB()
+    {
+    	Requests req = new Requests();
+        req.execute("get", "http://" + m.getIp() + "/api/content/list_content");
+        try {
+			String result = req.get(10, TimeUnit.SECONDS);
+			if (result != null) {
 				JSONObject jObject = new JSONObject(result);
 				JSONArray jObj = jObject.getJSONArray("contents");
-				List<String> jsonData = new ArrayList<String>();
-				contentIds = new ArrayList<String>();
-				for (int i=0; i < jObj.length(); i++) {
-					jsonData.add((jObj.getJSONObject(i)).getString("title"));
-					contentIds.add((jObj.getJSONObject(i)).getString("_id"));
-//					jsonData.add(jObj.getString(jNames.getString(i)));
-//					Log.v("json", jObj.getString(jNames.getString(i)));
+				List<String> viewData = new ArrayList<String>();
+				dataUri = new ArrayList<String>();
+				for (int i=0; i < jObj.length(); i++) {				
+					viewData.add((jObj.getJSONObject(i)).getString("title"));
+					dataUri.add((jObj.getJSONObject(i)).getString("uri"));
 				}
-		        ListView l= (ListView) findViewById(R.id.listView1);
-		        adapter = new ArrayAdapter<String>(getBaseContext(), android.R.layout.simple_list_item_1, jsonData);
-		        l.setAdapter(adapter);
-			} catch (JSONException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+		    ListView l= (ListView) findViewById(R.id.listView1);
+	        adapter = new ArrayAdapter<String>(getBaseContext(), android.R.layout.simple_list_item_1, viewData);
+	        l.setAdapter(adapter);				
+	        l.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+	        	@Override
+	            public void onItemClick(AdapterView<?> parent, final View view, int position, long id) {
+	        		Intent intent = new Intent(parent.getContext(), Content.class);
+	        		String name = parent.getAdapter().getItem(position).toString();
+	        		String uri = dataUri.get(position);
+	        		Bundle b = new Bundle();
+	        		b.putString("name", name);
+	        		b.putString("uri", uri);
+	        		intent.putExtras(b);
+	        		startActivity(intent);
+	        	}
+	        });
 			}
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
@@ -75,35 +446,108 @@ public class MainActivity extends Activity {
 		} catch (ExecutionException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}*/
-//        new HttpAsyncTask().execute("http://163.5.84.222/api/content/list_content");
-        String [] contents = getResources().getStringArray(R.array.contents);
-        ListView l= (ListView) findViewById(R.id.listView1);
-        adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, contents);
-//        l.setAdapter(adapter);
-        l.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-        	@Override
-            public void onItemClick(AdapterView<?> parent, final View view, int position, long id) {
-        		Intent intent = new Intent(parent.getContext(), Content.class);
-        		String name = parent.getAdapter().getItem(position).toString();
-//        		String ids = contentIds.get(position);
-        		Bundle b = new Bundle();
-        		b.putString("name", name);
-//        		b.putString("ids", ids);
-        		intent.putExtras(b);
-        		startActivity(intent);
-        	}
-        });
+		} catch (TimeoutException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    }
+    
+    /**
+     * Update view filter no db.
+     *
+     * @param arr the arr
+     */
+    private void updateViewFilterNoDB(ArrayList<String> arr)
+    {
+    	String reqStr = "http://" + m.getIp() + "/api/content/list_content//";
+    	for (int i = 0; i < arr.size(); i++) {
+    		try {
+				reqStr += URLEncoder.encode(arr.get(i), "utf-8") + "/";
+			} catch (UnsupportedEncodingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+    	}
+    	Log.d("reqStr", reqStr);
+    	Requests req = new Requests();
+        req.execute("get", reqStr);
+        try {
+        	Boolean status;
+			String result = req.get(10, TimeUnit.SECONDS);
+			Log.d("result", result);
+			if (result != null) {
+				Log.d("notnull", result);
+				JSONObject jObject = new JSONObject(result);
+				List<String> viewData = new ArrayList<String>();
+				if (jObject.getInt("status") != 204) {
+					status = true;
+					JSONArray jObj = jObject.getJSONArray("contents");
+					dataUri = new ArrayList<String>();
+					for (int i=0; i < jObj.length(); i++) {				
+						viewData.add((jObj.getJSONObject(i)).getString("title"));
+						dataUri.add((jObj.getJSONObject(i)).getString("uri"));
+					}
+				} else {
+					status = false;
+				}
+				ListView l= (ListView) findViewById(R.id.listView1);
+				if (status = false) {
+					Log.d("viewData", "empty");
+					l.setAdapter(null);
+				} else {
+					Log.d("viewData", "not empty");
+					adapter = new ArrayAdapter<String>(getBaseContext(), android.R.layout.simple_list_item_1, viewData);
+					l.setAdapter(adapter);
+				}
+	        l.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+	        	@Override
+	            public void onItemClick(AdapterView<?> parent, final View view, int position, long id) {
+	        		Intent intent = new Intent(parent.getContext(), Content.class);
+	        		String name = parent.getAdapter().getItem(position).toString();
+	        		String uri = dataUri.get(position);
+	        		Bundle b = new Bundle();
+	        		b.putString("name", name);
+	        		b.putString("uri", uri);
+	        		intent.putExtras(b);
+	        		startActivity(intent);
+	        	}
+	        });
+			}
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ExecutionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (TimeoutException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
     }
 
-    
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.main, menu);
-        return true;
+    /**
+     * On add.
+     *
+     * @param view the view
+     */
+    public void onAdd(View view) {
+    	Intent intent = new Intent(this, AddContent.class);
+    	startActivity(intent);
     }
     
+    public void onDelete(View view) {
+    	Intent intent = new Intent(this, DeleteContents.class);
+    	startActivity(intent);
+    }
+    /**
+     * Fetch data.
+     */
     private void fetchData()
     {
     	Log.d("fetchData", "start");
@@ -114,7 +558,7 @@ public class MainActivity extends Activity {
         req.execute("get", "http://" + m.getIp() + "/api/content/list_content");
         try {
         	Log.d("fetchData", "try");        	
-			String result = req.get(3, TimeUnit.SECONDS);
+			String result = req.get(10, TimeUnit.SECONDS);
 			if (result == null) {
 				dataDB.close();
 				return;
@@ -123,10 +567,10 @@ public class MainActivity extends Activity {
 			JSONArray jObj = jObject.getJSONArray("contents");
 			for (int i=0; i < jObj.length(); i++) {
 				Data data = new Data();
-				data.setDataId((jObj.getJSONObject(i)).getString("_id"));
+				data.setDataId((jObj.getJSONObject(i)).getString("uri"));
 				data.setTitle((jObj.getJSONObject(i)).getString("title"));
 //				data.setId((jObj.getJSONObject(i)).getString("_id"));
-				data.setText((jObj.getJSONObject(i)).getString("text"));
+				data.setText((jObj.getJSONObject(i)).getString("summary"));
 				dataDB.insertData(data);
 				Log.i("insert", "insert finished");
 			}
@@ -148,6 +592,11 @@ public class MainActivity extends Activity {
     	Log.d("fetchData", "end");
     }
 
+    /**
+     * Checks if is online.
+     *
+     * @return true, if is online
+     */
     public boolean isOnline() {
         ConnectivityManager cm =
             (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -158,6 +607,9 @@ public class MainActivity extends Activity {
         return false;
     }
     
+    /**
+     * Fetch tag.
+     */
     private void fetchTag()
     {
     	PumgranaDB tagDB = new PumgranaDB(this);
@@ -165,12 +617,13 @@ public class MainActivity extends Activity {
     	Requests req = new Requests();
         req.execute("get", "http://" + m.getIp() + "/api/tag/list_by_type/CONTENT");
         try {
-			String result = req.get(1, TimeUnit.SECONDS);
+			String result = req.get(10, TimeUnit.SECONDS);
+			Log.d("RESULT", result);
 			JSONObject jObject = new JSONObject(result);
 			JSONArray jObj = jObject.getJSONArray("tags");
 			for (int i=0; i < jObj.length(); i++) {
 				Tag tag = new Tag();
-				tag.setTagId(jObj.getJSONObject(i).getString("_id"));
+				tag.setTagId(jObj.getJSONObject(i).getString("uri"));
 				tag.setName(jObj.getJSONObject(i).getString("subject"));
 				tagDB.insertTag(tag);
 				Log.i("insert", "insert finished");
@@ -192,6 +645,9 @@ public class MainActivity extends Activity {
         tagDB.close();
     }
     
+    /**
+     * Fetch dt.
+     */
     private void fetchDT()
     {
         Log.i("fetchDT", "start");
@@ -211,13 +667,13 @@ public class MainActivity extends Activity {
         	Requests req = new Requests();
             req.execute("get", "http://" + m.getIp() + "/api/tag/list_from_content/" + data.getDataId());
             try {
-    			String result = req.get(1, TimeUnit.SECONDS);
+    			String result = req.get(10, TimeUnit.SECONDS);
     			JSONObject jObject = new JSONObject(result);
     			JSONArray jObj = jObject.getJSONArray("tags");
     			for (int i=0; i < jObj.length(); i++) {
     				DataTag dt = new DataTag();
     				dt.setDataId(data.getDataId());
-    				dt.setTagId(jObj.getJSONObject(i).getString("_id"));
+    				dt.setTagId(jObj.getJSONObject(i).getString("uri"));
     				dtDB.insertDataTag(dt);
     				Log.i("insert", "insert finished");
     			}
@@ -239,6 +695,9 @@ public class MainActivity extends Activity {
         Log.i("fetchDT", "end");
     }
     
+    /**
+     * Update view.
+     */
     private void updateView()
     {
     	Log.i("updateView", "start");
@@ -249,10 +708,12 @@ public class MainActivity extends Activity {
     		return;
     	Iterator<Data> it = listData.iterator();
 		List<String> viewData = new ArrayList<String>();
-    	Log.i("updateView", "loop");
+		dataUri = new ArrayList<String>();
+		Log.i("updateView", "loop");
     	while (it.hasNext()) {
     		Data data = it.next();
     		viewData.add(data.getTitle());
+    		dataUri.add(data.getDataId());
     	}
     	dataDB.close();
     	Log.i("updateView", "adapter");
@@ -261,6 +722,11 @@ public class MainActivity extends Activity {
         l.setAdapter(adapter);	
     }
     
+    /**
+     * Open tags.
+     *
+     * @param view the view
+     */
     public void openTags(View view)
     {
     	Intent intent = new Intent(this, TagSelect.class);
@@ -271,33 +737,42 @@ public class MainActivity extends Activity {
     	startActivityForResult(intent, 0);
     }
     
+    /* (non-Javadoc)
+     * @see android.app.Activity#onActivityResult(int, int, android.content.Intent)
+     */
     protected void onActivityResult(int requestCode, int resultCode, Intent data)
     {
     	String tags = data.getExtras().getString("Tags");
-    	String st = tags.substring(1, tags.length() - 1);
-    	Log.i("st", st);
-    	String[] tagList = st.split(", ");
-    	PumgranaDB pDB = new PumgranaDB(this);
-    	pDB.open();
-    	List<String> tIL = new ArrayList<String>();
-    	for (int i=0;i< tagList.length; i++)
-    	{
-    		Tag t = pDB.getTag(tagList[i]);
-    		tIL.add(t.getTagId());
+    	ArrayList<String> ids = data.getExtras().getStringArrayList("ids");
+    	if (tags.equals("[]")) {
+    		Log.d("onActivityResult3", "empty");
+    		updateViewNoDB();
+	        TextView t = (TextView) findViewById(R.id.textView1);
+	        t.setText("Aucun");
+    	} else {
+	    	String st = tags.substring(1, tags.length() - 1);
+	    	Log.i("onActivityResult2", st);
+	    	String[] tagList = st.split(", ");
+/*	    	PumgranaDB pDB = new PumgranaDB(this);
+	    	pDB.open();
+	    	List<String> tIL = new ArrayList<String>();
+	    	for (int i=0;i< tagList.length; i++)
+	    	{
+	    		Tag t = pDB.getTag(tagList[i]);
+	    		tIL.add(t.getTagId());
+	    	}
+	    	List<Data> dList = pDB.getDbyT(tIL);
+			Iterator<Data> it = dList.iterator();
+			List<String> viewData = new ArrayList<String>();
+			while(it.hasNext()) {
+				Data d = it.next();
+				viewData.add(d.getTitle());
+			}
+			pDB.close();*/
+	    	updateViewFilterNoDB(ids);
+	        TextView t = (TextView) findViewById(R.id.textView1);
+	        t.setText(tags);
     	}
-    	List<Data> dList = pDB.getDbyT(tIL);
-		Iterator<Data> it = dList.iterator();
-		List<String> viewData = new ArrayList<String>();
-		while(it.hasNext()) {
-			Data d = it.next();
-			viewData.add(d.getTitle());
-		}
-		pDB.close();
-        ListView l= (ListView) findViewById(R.id.listView1);
-        adapter = new ArrayAdapter<String>(getBaseContext(), android.R.layout.simple_list_item_1, viewData);
-        l.setAdapter(adapter);	
-        TextView t = (TextView) findViewById(R.id.textView1);
-        t.setText(tags);
     }
     
 /*    private class HttpAsyncTask extends AsyncTask<String, Void, String> {

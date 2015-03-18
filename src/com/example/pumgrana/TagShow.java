@@ -1,48 +1,94 @@
 package com.example.pumgrana;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
+import android.text.Html;
+import android.util.Log;
 import android.view.Menu;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.TextView;
 
+// TODO: Auto-generated Javadoc
+/**
+ * Show the current content tags.
+ */
 public class TagShow extends Activity {
 
+    /** The adapter. */
     ArrayAdapter<String> adapter;
 	
+    /* (non-Javadoc)
+     * @see android.app.Activity#onCreate(android.os.Bundle)
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_tag_show);
-        String name = getIntent().getExtras().getString("name");
-    	PumgranaDB dataDB = new PumgranaDB(this);
-		dataDB.open();
-		Data data = dataDB.getData(name);
-		List<Tag> tagList = dataDB.getTbyD(data.getDataId());
-		List<String> tagNameList = new ArrayList<String>();
-		Iterator<Tag> it = tagList.iterator();
-		while(it.hasNext()) {
-			Tag tag = it.next();
-			tagNameList.add(tag.getName());
-		}
-		dataDB.close();
+        getTagsNoDB(getIntent().getExtras().getString("id"));
 //        String [] contents = getResources().getStringArray(R.array.tags);
-        ListView l= (ListView) findViewById(R.id.listView1);
-        adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, tagNameList);
-        l.setAdapter(adapter);
 //		String id = getIntent().getExtras().getString("ids");
-//        new HttpAsyncTask().execute("http://163.5.84.222/api/tag/list_from_content/".concat(id));
+//        new HttpAsyncTask().execute("http://b01.pumgrana.com/api/tag/list_from_content/".concat(id));
     }
 
+    public void getTagsNoDB(String uri) {
+    	Misc m = new Misc(this);
+    	Requests req = new Requests();
+    	Log.d("fetchData", "req");
+		try {
+			req.execute("get", "http://" + m.getIp() + "/api/tag/list_from_content/" + URLEncoder.encode(uri, "utf-8"));
+			String result = req.get(3, TimeUnit.SECONDS);
+			JSONObject jObject = new JSONObject(result);
+			JSONArray jObj = jObject.getJSONArray("tags");
+			List<String> tagNameList = new ArrayList<String>();
+			for (int i=0; i < jObj.length(); i++) {
+				tagNameList.add(jObj.getJSONObject(i).getString("subject"));
+			}
+	        ListView l= (ListView) findViewById(R.id.listView1);
+	        adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, tagNameList);
+	        l.setAdapter(adapter);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ExecutionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (TimeoutException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    	
+    }
+    
+	/* (non-Javadoc)
+	 * @see android.app.Activity#onCreateOptionsMenu(android.view.Menu)
+	 */
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		getMenuInflater().inflate(R.menu.tag_show, menu);
 		return true;
 	}
+	
 /*
     private class HttpAsyncTask extends AsyncTask<String, Void, String> {
         @Override

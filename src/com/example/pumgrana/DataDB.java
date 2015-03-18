@@ -66,7 +66,7 @@ public class DataDB {
 		
 		c.moveToFirst();
 		Data data = new Data();
-		data.setId(c.getString(NUM_COL_ID));
+		data.setId(c.getInt(NUM_COL_ID));
 		data.setTitle(c.getString(NUM_COL_TITLE));
 		data.setText(c.getString(NUM_COL_TEXT));
 		c.close();

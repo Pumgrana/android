@@ -5,5 +5,11 @@
         android:orderInCategory="100"
         android:showAsAction="never"
         android:title="@string/action_settings"/>
+    
+    <item 
+        android:id="@+id/action_links"
+        android:title="links"
+        android:icon="@drawable/icons_mob_links_red" 
+        android:showAsAction="ifRoom" />"
 
 </menu>
